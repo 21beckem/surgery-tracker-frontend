@@ -379,7 +379,7 @@
         ` : ''}
         ${s.complications ? `
         <div class="surgery-notes">
-          <div class="surgery-notes-label"><i class="fa-solid fa-triangle-exclamation" style="color:#ea580c"></i> Complications</div>
+          <div class="surgery-notes-label"><i class="fa-solid fa-triangle-exclamation" style="color:var(--gray-900)"></i> Complications</div>
           <div class="surgery-notes-text" style="border-color:#fed7aa; background:#fff7ed;">${escHtml(s.complications)}</div>
         </div>
         ` : ''}
@@ -440,7 +440,7 @@
         </div>
         ` : ''}
 
-        <h3 style="font-size:1rem; color:var(--gray-600); margin-bottom:16px;">${sorted.length} Surgical Procedure${sorted.length !== 1 ? 's' : ''}</h3>
+        <h3 style="font-size:1rem; color:var(--gray-800); margin-bottom:16px;">${sorted.length} Surgical Procedure${sorted.length !== 1 ? 's' : ''}</h3>
 
         <div class="surgery-list">
           ${sorted.map(s => renderSurgeryCard(s, true)).join('')}
@@ -662,7 +662,7 @@
             <div class="confirm-body">
               <div class="confirm-icon"><i class="fa-solid fa-trash"></i></div>
               <p>Are you sure you want to delete<br><span class="confirm-name">${escHtml(s.name)}</span>?</p>
-              <p style="margin-top:8px; font-size:0.82rem; color:var(--gray-400);">This action cannot be undone. All associated documents will also be deleted.</p>
+              <p style="margin-top:8px; font-size:0.82rem; color:var(--gray-700);">This action cannot be undone. All associated documents will also be deleted.</p>
             </div>
           </div>
           <div class="modal-footer">
@@ -685,15 +685,15 @@
             <button class="modal-close" onclick="window._app.closeModal()">&times;</button>
           </div>
           <div class="modal-body">
-            <p style="color:var(--gray-600); font-size:0.9rem; margin-bottom:4px;">
+            <p style="color:var(--gray-700); font-size:0.9rem; margin-bottom:4px;">
               Generate a secure link for your doctor. They'll need to verify your <strong>date of birth</strong> before viewing any data.
             </p>
-            <p style="color:var(--gray-400); font-size:0.8rem; margin-bottom:16px;">
+            <p style="color:var(--gray-700); font-size:0.8rem; margin-bottom:16px;">
               <i class="fa-solid fa-circle-info"></i> The link always shows your latest data, not a snapshot. You can revoke it at any time.
             </p>
 
             ${!state.patientInfo.dob ? `
-              <div style="background:var(--warning-light); border:1px solid #fcd34d; border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; font-size:0.85rem; color:#92400e;">
+              <div style="background:var(--warning-light); border:1px solid #fcd34d; border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; font-size:0.85rem; color:var(--gray-900);">
                 <i class="fa-solid fa-lightbulb"></i> <strong>Required:</strong> Add your date of birth in <strong>Settings</strong> first. Doctors must verify your DOB to access shared data.
               </div>
             ` : `
@@ -719,7 +719,7 @@
 
   function renderShareLinksList() {
     if (state.shareLinks.length === 0) {
-      return '<p style="color:var(--gray-400); font-size:0.85rem; text-align:center; padding:12px;">No share links created yet.</p>';
+      return '<p style="color:var(--gray-700); font-size:0.85rem; text-align:center; padding:12px;">No share links created yet.</p>';
     }
 
     return state.shareLinks.map(link => {
@@ -760,7 +760,7 @@
             <div class="modal-body">
               <div class="settings-section">
                 <h3><i class="fa-solid fa-user"></i> Patient Information</h3>
-                <p style="font-size:0.82rem; color:var(--gray-400); margin-bottom:16px;">
+                <p style="font-size:0.82rem; color:var(--gray-700); margin-bottom:16px;">
                   This information appears on shared reports. Your <strong>date of birth</strong> is required for doctor sharing \u2014 it's used for identity verification.
                 </p>
                 <div class="form-group">
@@ -800,7 +800,7 @@
 
               <div class="settings-section">
                 <h3><i class="fa-solid fa-user-gear"></i> Account</h3>
-                <p style="font-size:0.82rem; color:var(--gray-500); margin-bottom:10px;">Signed in as <strong>${escHtml(getUserEmail())}</strong></p>
+                <p style="font-size:0.82rem; color:var(--gray-700); margin-bottom:10px;">Signed in as <strong>${escHtml(getUserEmail())}</strong></p>
                 <button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="window._app.logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
               </div>
             </div>
@@ -843,28 +843,28 @@
           <div class="modal-body">
             <div style="display:grid; grid-template-columns: 160px 1fr; gap: 8px 16px;">
               ${fields.map(([label, value]) => `
-                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-500);">${label}</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-700);">${label}</div>
                 <div style="font-size:0.9rem; color:var(--gray-800);">${escHtml(value)}</div>
               `).join('')}
             </div>
 
             ${s.notes ? `
               <div style="margin-top:20px;">
-                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-500); margin-bottom:6px;">Notes</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-700); margin-bottom:6px;">Notes</div>
                 <div class="surgery-notes-text">${escHtml(s.notes)}</div>
               </div>
             ` : ''}
 
             ${s.had_complications ? `
               <div style="margin-top:16px;">
-                <div style="font-size:0.82rem; font-weight:600; color:#ea580c; margin-bottom:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Complications</div>
-                <div class="surgery-notes-text" style="border-color:#fed7aa; background:#fff7ed;">${escHtml(s.complications || 'Yes (no details provided)')}</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-900); margin-bottom:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Complications</div>
+                <div class="surgery-notes-text" style="border-color:#fde68a; background:#fffbeb;">${escHtml(s.complications || 'Yes (no details provided)')}</div>
               </div>
             ` : ''}
 
             ${docs.length > 0 ? `
               <div style="margin-top:20px;">
-                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-500); margin-bottom:8px;"><i class="fa-solid fa-paperclip"></i> Documents (${docs.length})</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--gray-700); margin-bottom:8px;"><i class="fa-solid fa-paperclip"></i> Documents (${docs.length})</div>
                 <div class="document-list">
                   ${docs.map(doc => `
                     <div class="document-item">
@@ -1528,7 +1528,7 @@
   function formatDate(dateStr) {
     if (!dateStr) return '';
     try {
-      const d = new Date(dateStr + 'T00:00:00');
+      const d = new Date(dateStr);
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch { return dateStr; }
   }
