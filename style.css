@@ -262,7 +262,7 @@ body {
 /* ---- Stats Bar ---- */
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -1047,7 +1047,6 @@ body {
   .toolbar-left, .search-box, .search-box input, .sort-select { width: 100%; }
   .toolbar-left { flex-direction: column; align-items: stretch; }
   .form-row { grid-template-columns: 1fr; }
-  .stats-bar { grid-template-columns: 1fr; }
   .surgery-card-body { grid-template-columns: 1fr; }
   .container { padding: 14px 12px 20px; }
   .surgery-card-header { flex-direction: column; gap: 10px; padding: 16px 16px 0; }

@@ -358,9 +358,9 @@
           </div>
           ${!isShared ? `
           <div class="surgery-card-actions">
-            <button class="btn btn-ghost btn-icon" onclick="window._app.openDetail('${s.id}')" title="View details"><i class="fa-solid fa-eye"></i></button>
-            <button class="btn btn-ghost btn-icon" onclick="window._app.openEdit('${s.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-            <button class="btn btn-ghost btn-icon" onclick="window._app.openDelete('${s.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="window._app.openDetail('${s.id}')" title="View details"><i class="fa-solid fa-eye"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="window._app.openEdit('${s.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="window._app.openDelete('${s.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
           </div>
           ` : ''}
         </div>
