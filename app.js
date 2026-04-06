@@ -6,7 +6,7 @@
   'use strict';
 
   // ---- Configuration ----
-  const API_BASE = 'https://surgery-tracker-api.21beckem8.workers.dev'; // Set to your Worker URL in production, e.g. 'https://surgery-tracker-api.yourname.workers.dev'
+  const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8787' : 'https://surgery-tracker-api.21beckem8.workers.dev';
 
   // ---- Auth State ----
   function getToken() { return localStorage.getItem('surgery_tracker_token'); }
@@ -83,6 +83,7 @@
     // Documents
     documentsCache: {}, // surgeryId -> [docs]
     uploadingDoc: false,
+    pendingDocuments: [], // Files selected while creating a new surgery
   };
 
   // ---- Check for share mode ----
@@ -476,6 +477,7 @@
     const submitLabel = existing ? 'Save Changes' : 'Add Surgery';
     const surgeryId = existing ? existing.id : null;
     const docs = surgeryId ? (state.documentsCache[surgeryId] || []) : [];
+    const pendingDocs = !existing ? state.pendingDocuments : [];
 
     return `
       <div class="modal-overlay" onclick="window._app.closeModal(event)">
@@ -579,31 +581,31 @@
               ${existing ? `
               <div class="form-group">
                 <label class="form-label"><i class="fa-solid fa-paperclip"></i> Documents</label>
-                ${docs.length > 0 ? `
-                <div class="document-list" style="margin-bottom: 10px;">
-                  ${docs.map(doc => `
-                    <div class="document-item">
-                      <div class="document-item-info">
-                        <i class="fa-solid ${getFileIcon(doc.mime_type)}"></i>
-                        <span class="document-item-name">${escHtml(doc.filename)}</span>
-                        <span class="document-item-size">${formatFileSize(doc.size)}</span>
-                      </div>
-                      <div class="document-item-actions">
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="window._app.downloadDoc('${doc.id}')" title="Download"><i class="fa-solid fa-download"></i></button>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="window._app.deleteDoc('${doc.id}', '${surgeryId}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                      </div>
-                    </div>
-                  `).join('')}
+                <div class="document-list" id="modalDocsList" style="margin-bottom: 10px; ${docs.length > 0 ? '' : 'display:none;'}">
+                  ${renderModalDocItems(docs, surgeryId)}
                 </div>
-                ` : ''}
+                <div class="form-hint" id="modalDocsEmpty" style="margin-bottom:10px; ${docs.length > 0 ? 'display:none;' : ''}">No documents uploaded yet.</div>
                 <div class="upload-area" onclick="document.getElementById('docUpload').click()">
                   <div><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                  <p>${state.uploadingDoc ? 'Uploading...' : 'Click to upload a document'}</p>
-                  <div class="upload-hint">PDF, images, Word docs \u2014 max 10MB</div>
+                  <p id="docUploadLabel">Click to upload a document</p>
+                  <div class="upload-hint">PDF, images, Word docs \u2014 max 5MB</div>
                 </div>
                 <input type="file" id="docUpload" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.txt" onchange="window._app.uploadDocument(event, '${surgeryId}')">
               </div>
-              ` : ''}
+              ` : `
+              <div class="form-group">
+                <label class="form-label"><i class="fa-solid fa-paperclip"></i> Documents (optional)</label>
+                <div class="document-list" id="pendingDocsList" style="margin-bottom: 10px; ${pendingDocs.length > 0 ? '' : 'display:none;'}">
+                  ${renderPendingDocItems(pendingDocs)}
+                </div>
+                <div class="upload-area" onclick="document.getElementById('pendingDocUpload').click()">
+                  <div><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                  <p>Click to add documents</p>
+                  <div class="upload-hint">Files upload after the surgery is created \u2014 max 5MB each</div>
+                </div>
+                <input type="file" id="pendingDocUpload" style="display:none" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.txt" onchange="window._app.addPendingDocuments(event)">
+              </div>
+              `}
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-ghost" onclick="window._app.closeModal()">Cancel</button>
@@ -613,6 +615,37 @@
         </div>
       </div>
     `;
+  }
+
+  function renderModalDocItems(docs, surgeryId) {
+    return docs.map(doc => `
+      <div class="document-item">
+        <div class="document-item-info">
+          <i class="fa-solid ${getFileIcon(doc.mime_type)}"></i>
+          <span class="document-item-name">${escHtml(doc.filename)}</span>
+          <span class="document-item-size">${formatFileSize(doc.size)}</span>
+        </div>
+        <div class="document-item-actions">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="window._app.downloadDoc('${doc.id}')" title="Download"><i class="fa-solid fa-download"></i></button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="window._app.deleteDoc('${doc.id}', '${surgeryId}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderPendingDocItems(docs) {
+    return docs.map((doc, idx) => `
+      <div class="document-item">
+        <div class="document-item-info">
+          <i class="fa-solid ${getFileIcon(doc.type)}"></i>
+          <span class="document-item-name">${escHtml(doc.name)}</span>
+          <span class="document-item-size">${formatFileSize(doc.size)}</span>
+        </div>
+        <div class="document-item-actions">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="window._app.removePendingDocument(${idx})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+    `).join('');
   }
 
   function renderDeleteConfirm() {
@@ -1011,7 +1044,12 @@
   }
 
   // ---- Modal Actions ----
-  function openAdd() { state.currentModal = 'add'; state.editingId = null; render(); }
+  function openAdd() {
+    state.currentModal = 'add';
+    state.editingId = null;
+    state.pendingDocuments = [];
+    render();
+  }
   function openEdit(id) { state.currentModal = 'edit'; state.editingId = id; render(); }
   function openDelete(id) { state.currentModal = 'delete'; state.deletingId = id; render(); }
   function openDetail(id) { state.currentModal = 'detail'; state.viewingId = id; render(); }
@@ -1042,6 +1080,7 @@
     state.editingId = null;
     state.deletingId = null;
     state.viewingId = null;
+    state.pendingDocuments = [];
     render();
   }
 
@@ -1075,16 +1114,39 @@
         if (idx !== -1) state.surgeries[idx] = resp.surgery;
         showToast('Surgery updated successfully!');
       } else {
+        const pendingDocs = state.pendingDocuments.slice();
         const resp = await apiJson('/api/surgeries', {
           method: 'POST',
           body: JSON.stringify(data),
         });
         state.surgeries.push(resp.surgery);
         state.documentsCache[resp.surgery.id] = [];
-        showToast('Surgery added successfully!');
+
+        if (pendingDocs.length > 0) {
+          const uploadResults = await Promise.allSettled(
+            pendingDocs.map(file => uploadDocumentFile(resp.surgery.id, file))
+          );
+
+          const uploadedDocs = uploadResults
+            .filter(r => r.status === 'fulfilled' && r.value && r.value.document)
+            .map(r => r.value.document);
+          if (uploadedDocs.length > 0) {
+            state.documentsCache[resp.surgery.id] = uploadedDocs;
+          }
+
+          const failed = uploadResults.filter(r => r.status === 'rejected').length;
+          if (failed > 0) {
+            showToast(`Surgery created. Uploaded ${pendingDocs.length - failed}/${pendingDocs.length} document(s).`, 'error');
+          } else {
+            showToast(`Surgery and ${pendingDocs.length} document(s) added successfully!`);
+          }
+        } else {
+          showToast('Surgery added successfully!');
+        }
       }
       state.currentModal = null;
       state.editingId = null;
+      state.pendingDocuments = [];
       render();
     } catch (err) {
       showToast(err.message, 'error');
@@ -1172,31 +1234,97 @@
     e.target.value = '';
 
     if (file.size > 10 * 1024 * 1024) {
-      showToast('File too large. Maximum size is 10MB.', 'error');
+      showToast('File too large. Maximum size is 5MB.', 'error');
       return;
     }
 
     state.uploadingDoc = true;
-    render();
+    const uploadInput = document.getElementById('docUpload');
+    const uploadLabel = document.getElementById('docUploadLabel');
+    if (uploadInput) uploadInput.disabled = true;
+    if (uploadLabel) uploadLabel.textContent = 'Uploading...';
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const data = await apiJson(`/api/surgeries/${surgeryId}/documents`, {
-        method: 'POST',
-        body: formData,
-      });
+      const data = await uploadDocumentFile(surgeryId, file);
 
       if (!state.documentsCache[surgeryId]) state.documentsCache[surgeryId] = [];
       state.documentsCache[surgeryId].push(data.document);
+      refreshEditDocumentsUI(surgeryId);
       showToast('Document uploaded!');
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       state.uploadingDoc = false;
-      render();
+      if (uploadInput) uploadInput.disabled = false;
+      if (uploadLabel) uploadLabel.textContent = 'Click to upload a document';
     }
+  }
+
+  async function uploadDocumentFile(surgeryId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiJson(`/api/surgeries/${surgeryId}/documents`, {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  function addPendingDocuments(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(`Skipped ${file.name}: file exceeds 5MB.`, 'error');
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length > 0) {
+      state.pendingDocuments = state.pendingDocuments.concat(validFiles);
+      refreshPendingDocumentsUI();
+    }
+  }
+
+  function removePendingDocument(index) {
+    if (index < 0 || index >= state.pendingDocuments.length) return;
+    state.pendingDocuments.splice(index, 1);
+    refreshPendingDocumentsUI();
+  }
+
+  function refreshEditDocumentsUI(surgeryId) {
+    const list = document.getElementById('modalDocsList');
+    const empty = document.getElementById('modalDocsEmpty');
+    if (!list || !empty) return;
+
+    const docs = state.documentsCache[surgeryId] || [];
+    if (docs.length === 0) {
+      list.style.display = 'none';
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+
+    list.style.display = '';
+    list.innerHTML = renderModalDocItems(docs, surgeryId);
+    empty.style.display = 'none';
+  }
+
+  function refreshPendingDocumentsUI() {
+    const list = document.getElementById('pendingDocsList');
+    if (!list) return;
+
+    if (state.pendingDocuments.length === 0) {
+      list.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+
+    list.style.display = '';
+    list.innerHTML = renderPendingDocItems(state.pendingDocuments);
   }
 
   async function downloadDoc(docId) {
@@ -1438,6 +1566,7 @@
     setSearch, setSort, exportData, importData,
     switchAuth, submitAuth, logout,
     submitDobVerify,
+    addPendingDocuments, removePendingDocument,
     uploadDocument, downloadDoc, downloadSharedDoc, deleteDoc,
   };
 
